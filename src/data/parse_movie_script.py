@@ -1,4 +1,3 @@
-from pydantic import BaseModel
 from typing import Optional
 import re
 from io import StringIO
@@ -118,7 +117,7 @@ class MovieScriptParser:
             # Is it a new scene starting ?
             new_scene_name = MovieScriptParser._get_scene_name(line)
             if new_scene_name:
-                # This is a new scene
+                # This is a new scene coming up
                 MovieScriptParser._add_scene(parser_state)
                 parser_state.scene_name = new_scene_name
 
@@ -131,23 +130,25 @@ class MovieScriptParser:
                 # Existing scene continues
                 num_tabs = MovieScriptParser._count_leading_tabs(line)
 
-                if num_tabs == 6:
+                if num_tabs == 6:  
+                    # A new character (dialogue) is starting
 
                     if parser_state.character_name:
-                        # Entry ends with a movie character, add it
+                        # Add previous entry to the scene, a new entry is starting
                         MovieScriptParser._add_entry(parser_state)
 
-                    # This is a new character beginning to speak
+                    # Record the new character name
                     parser_state.character_name = line.strip()
 
-                elif num_tabs in [4, 5] and parser_state.character_name is not None:
+                elif num_tabs in [4, 5] and parser_state.character_name is not None:  
                     # Character is still speaking, keep adding the dialogue
                     MovieScriptParser._concatenate_text(
                         parser_state.dialogue_text, line
                     )
                 else:
+                    # This is a scene description
                     if parser_state.character_name:
-                        # Entry ends with a movie character, add it
+                        # Previous entry with a movie character has ended, add it
                         MovieScriptParser._add_entry(parser_state)
                         parser_state.character_name = None
 
@@ -252,7 +253,7 @@ class MovieScriptParser:
     @staticmethod
     def _get_scene_name(line: str) -> str:
         """
-        Try to match a new scene format <number><tab><scene name> and if successful, return scene name.
+        Try to match a new scene format <number><tab><scene name> and if successful, return scene name. Else return None.
 
         Args:
             line (str): The line of text to match.
@@ -279,7 +280,8 @@ class MovieScriptParser:
     @staticmethod
     def _concatenate_text(buffer: StringIO, new_line: str):
         """
-        Adds a new string to an existing StringIO buffer, removing a trailing '-' if it exists.
+        Adds a new string to an existing StringIO buffer by connecting whith a whitespace.
+        Note: It will remove a trailing '-' if it exists.
 
         Args:
             buffer (StringIO): The existing StringIO buffer.
