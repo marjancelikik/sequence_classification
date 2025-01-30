@@ -74,6 +74,17 @@ class MovieScriptParser:
         scenes: list[Scene]
         entries: list[Entry]
 
+        def reset_scene_state(self):
+            """
+            Reset the state of the parser for a new scene.
+            """
+            self.scene_text.seek(0)
+            self.scene_text.truncate()
+            self.dialogue_text.seek(0)
+            self.dialogue_text.truncate()
+            self.character_name = None
+            self.entries = []
+
     @staticmethod
     def from_text_file(filename: str) -> ParsedObject:
         """
@@ -122,10 +133,7 @@ class MovieScriptParser:
                 parser_state.scene_name = new_scene_name
 
                 # Reset the parser state
-                MovieScriptParser._reset_buffer(parser_state.scene_text)
-                MovieScriptParser._reset_buffer(parser_state.dialogue_text)
-                parser_state.entries = []
-                parser_state.character_name = None
+                parser_state.reset_scene_state()
             else:
                 # Existing scene continues
                 num_tabs = MovieScriptParser._count_leading_tabs(line)
